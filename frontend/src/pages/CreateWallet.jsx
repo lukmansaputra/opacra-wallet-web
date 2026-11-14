@@ -4,7 +4,7 @@ import { api } from '../supabaseClient.js';
 import { generateMnemonic } from '../crypto/mnemonic.js';
 import { encryptVault, setSessionPassword } from '../crypto/vault.js';
 import { setActiveWallet } from '../walletStore.js';
-import { Alert, Input, MagneticButton, SpotlightCard } from '../components/ui/index.js';
+import { Alert, Button, Card, IconChevronLeft, Input } from '../components/ui/index.js';
 
 /**
  * Buat wallet baru (client-side):
@@ -82,16 +82,17 @@ export default function CreateWallet({ onDone, onBack }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl px-4 py-8">
-      <SpotlightCard>
+    <div className="mx-auto w-full max-w-md px-4 py-8">
+      <Card>
         <button
           type="button"
           onClick={onBack}
-          className="rounded-full bg-white/5 px-3 py-1.5 text-sm font-semibold text-muted hover:bg-white/10 hover:text-text"
+          className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-white/5 hover:text-white"
         >
-          ← Kembali
+          <IconChevronLeft size={16} />
+          Kembali
         </button>
-        <h2 className="mt-4 text-2xl font-extrabold tracking-tight">Buat Wallet Baru</h2>
+        <h2 className="mt-4 text-xl font-semibold tracking-tight">Buat Wallet Baru</h2>
 
         {/* Indikator langkah */}
         <div className="mt-5">
@@ -99,13 +100,13 @@ export default function CreateWallet({ onDone, onBack }) {
             {STEPS.map((s, i) => (
               <div key={s} className="flex flex-1 flex-col gap-1.5">
                 <div
-                  className={`h-1.5 rounded-full transition-colors ${
-                    step > i + 1 || step === i + 1 ? 'bg-accent' : 'bg-white/10'
+                  className={`h-1 rounded-full transition-colors ${
+                    step >= i + 1 ? 'bg-white' : 'bg-white/10'
                   }`}
                 />
                 <span
-                  className={`text-center text-[11px] font-semibold ${
-                    step === i + 1 ? 'text-accent' : 'text-muted'
+                  className={`text-center text-[11px] font-medium ${
+                    step === i + 1 ? 'text-white' : 'text-muted'
                   }`}
                 >
                   {i + 1}. {s}
@@ -118,10 +119,10 @@ export default function CreateWallet({ onDone, onBack }) {
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
-            initial={{ opacity: 0, x: 16 }}
+            initial={{ opacity: 0, x: 12 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.2 }}
+            exit={{ opacity: 0, x: -12 }}
+            transition={{ duration: 0.18 }}
             className="mt-5"
           >
             {step === 1 && (
@@ -158,9 +159,9 @@ export default function CreateWallet({ onDone, onBack }) {
                     {error}
                   </Alert>
                 )}
-                <MagneticButton type="submit" className="mt-5">
-                  Buat seed phrase →
-                </MagneticButton>
+                <Button type="submit" className="mt-5">
+                  Buat seed phrase
+                </Button>
               </form>
             )}
 
@@ -175,13 +176,13 @@ export default function CreateWallet({ onDone, onBack }) {
                   {words.map((w, i) => (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, scale: 0.94 }}
+                      initial={{ opacity: 0, scale: 0.97 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.02 }}
-                      className="rounded-xl border border-line bg-card2 px-3 py-2"
+                      className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2"
                     >
                       <span className="text-xs text-muted">{i + 1}.</span>{' '}
-                      <strong className="text-sm">{w}</strong>
+                      <strong className="text-sm font-medium">{w}</strong>
                     </motion.div>
                   ))}
                 </div>
@@ -199,9 +200,9 @@ export default function CreateWallet({ onDone, onBack }) {
                     {error}
                   </Alert>
                 )}
-                <MagneticButton onClick={goQuiz} className="mt-5">
-                  Lanjut ke konfirmasi →
-                </MagneticButton>
+                <Button onClick={goQuiz} className="mt-5">
+                  Lanjut ke konfirmasi
+                </Button>
               </div>
             )}
 
@@ -225,9 +226,9 @@ export default function CreateWallet({ onDone, onBack }) {
                     {error}
                   </Alert>
                 )}
-                <MagneticButton onClick={finish} disabled={busy} className="mt-5">
+                <Button onClick={finish} disabled={busy} className="mt-5">
                   {busy ? 'Menyimpan vault terenkripsi…' : 'Selesai — simpan wallet'}
-                </MagneticButton>
+                </Button>
                 <p className="mt-4 text-xs leading-relaxed text-muted">
                   Alamat wallet akan muncul setelah worker ai-server memverifikasi derive
                   via opacra-wallet-cli (TODO-CLI). Sampai saat itu wallet berstatus
@@ -237,7 +238,7 @@ export default function CreateWallet({ onDone, onBack }) {
             )}
           </motion.div>
         </AnimatePresence>
-      </SpotlightCard>
+      </Card>
     </div>
   );
 }

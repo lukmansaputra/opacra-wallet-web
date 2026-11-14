@@ -13,22 +13,31 @@ import History from './pages/History.jsx';
 import Mining from './pages/Mining.jsx';
 import Settings from './pages/Settings.jsx';
 import { clearSessionPassword } from './crypto/vault.js';
-import { AnimatedTabs, Badge, MagneticButton, Skeleton } from './components/ui/index.js';
+import {
+  Badge,
+  IconClock,
+  IconCpu,
+  IconHome,
+  IconLogout,
+  IconSettings,
+  IconWallet,
+  Skeleton,
+} from './components/ui/index.js';
 
-const PAGES = [
-  { id: 'dashboard', label: 'Beranda', icon: '◈' },
-  { id: 'send', label: 'Kirim', icon: '↑' },
-  { id: 'receive', label: 'Terima', icon: '↓' },
-  { id: 'history', label: 'Riwayat', icon: '≡' },
-  { id: 'mining', label: 'Mining', icon: '⛏' },
-  { id: 'settings', label: 'Pengaturan', icon: '⚙' },
+/** Tab bawah ala wallet mobile: Beranda / Riwayat / Mining / Pengaturan.
+ *  Kirim & Terima bukan tab — dijangkau dari aksi cepat di Beranda. */
+const TABS = [
+  { id: 'dashboard', label: 'Beranda', icon: IconHome },
+  { id: 'history', label: 'Riwayat', icon: IconClock },
+  { id: 'mining', label: 'Mining', icon: IconCpu },
+  { id: 'settings', label: 'Pengaturan', icon: IconSettings },
 ];
 
 const pageMotion = {
-  initial: { opacity: 0, y: 14 },
+  initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -10 },
-  transition: { duration: 0.22, ease: 'easeOut' },
+  exit: { opacity: 0, y: -6 },
+  transition: { duration: 0.18, ease: 'easeOut' },
 };
 
 export default function App() {
@@ -65,16 +74,16 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="mx-auto min-h-screen w-full max-w-2xl px-4 py-6">
+      <div className="mx-auto min-h-screen w-full max-w-md px-4 py-6">
         <div className="flex items-center gap-3">
-          <Skeleton className="h-11 w-11 rounded-2xl" />
+          <Skeleton className="h-9 w-9 rounded-lg" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-3 w-24" />
           </div>
         </div>
-        <Skeleton className="mt-6 h-12 w-full" />
-        <Skeleton className="mt-4 h-64 w-full" />
+        <Skeleton className="mt-8 h-10 w-48" />
+        <Skeleton className="mt-4 h-24 w-full" />
         <p className="mt-6 text-center text-sm text-muted">Memuat…</p>
       </div>
     );
@@ -90,36 +99,34 @@ export default function App() {
     return <ImportWallet onDone={pickWallet} onBack={() => setFlow('onboarding')} />;
   }
 
+  const isTabPage = TABS.some((t) => t.id === page);
+
   return (
-    <div className="mx-auto min-h-screen w-full max-w-2xl px-4 pb-10">
-      <header className="sticky top-0 z-40 -mx-4 border-b border-line/70 bg-ink/85 px-4 py-3 backdrop-blur-md">
-        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
+    <div className="mx-auto min-h-screen w-full max-w-md px-4 pb-28">
+      {/* Top bar minimal */}
+      <header className="sticky top-0 z-40 -mx-4 border-b border-white/5 bg-ink/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex max-w-md items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-emerald-700 text-lg font-black text-[#06130a] shadow-glow">
-              ◈
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-[#06130A]">
+              <IconWallet size={18} />
             </div>
-            <div className="leading-tight">
-              <p className="text-[17px] font-extrabold tracking-tight">
-                Opacra <span className="text-accent">Wallet</span>
-              </p>
-              <p className="text-[11px] font-medium text-muted">Dompet OPCA · ai-server</p>
-            </div>
+            <p className="text-[15px] font-semibold tracking-tight">Opacra Wallet</p>
           </div>
-          <MagneticButton
-            variant="secondary"
-            size="sm"
-            magnetic={false}
+          <button
+            type="button"
             onClick={logout}
-            className="w-auto"
+            aria-label="Keluar"
+            className="rounded-lg p-2 text-muted transition-colors hover:bg-white/5 hover:text-white"
           >
-            Keluar
-          </MagneticButton>
+            <IconLogout size={18} />
+          </button>
         </div>
       </header>
 
-      <div className="mt-4 flex items-center justify-between gap-2 px-1">
-        <p className="min-w-0 truncate text-sm text-muted">
-          Dompet aktif: <strong className="text-text">{wallet.label}</strong>
+      {/* Dompet aktif */}
+      <div className="mt-3 flex items-center gap-2 px-1">
+        <p className="min-w-0 truncate text-xs text-muted">
+          {wallet.label}
         </p>
         {wallet.derivation_status === 'pending-cli' && (
           <Badge tone="warning" dot>
@@ -128,12 +135,8 @@ export default function App() {
         )}
       </div>
 
-      <nav className="mt-3">
-        <AnimatedTabs tabs={PAGES} value={page} onChange={setPage} />
-      </nav>
-
       <AnimatePresence mode="wait">
-        <motion.main key={page} {...pageMotion} className="mt-4">
+        <motion.main key={page} {...pageMotion} className="mt-2">
           {page === 'dashboard' && (
             <Dashboard
               wallet={wallet}
@@ -142,8 +145,8 @@ export default function App() {
               goHistory={() => setPage('history')}
             />
           )}
-          {page === 'send' && <Send wallet={wallet} />}
-          {page === 'receive' && <Receive wallet={wallet} />}
+          {page === 'send' && <Send wallet={wallet} onBack={() => setPage('dashboard')} />}
+          {page === 'receive' && <Receive wallet={wallet} onBack={() => setPage('dashboard')} />}
           {page === 'history' && <History wallet={wallet} />}
           {page === 'mining' && <Mining />}
           {page === 'settings' && (
@@ -158,12 +161,29 @@ export default function App() {
         </motion.main>
       </AnimatePresence>
 
-      <footer className="mt-8 border-t border-line/70 px-2 pt-5 text-center text-xs leading-relaxed text-muted">
-        Opacra (OPCA) — login Google lapis pertama, kirim tetap butuh PIN 6 digit.
-        <br />
-        Seed wallet utama tidak pernah keluar dari ai-server; wallet vault tersimpan
-        terenkripsi (AES-GCM) dan hanya bisa dibuka dengan password enkripsi kamu.
-      </footer>
+      {/* Bottom tab bar */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/5 bg-ink/95 backdrop-blur">
+        <div className="mx-auto flex max-w-md items-stretch pb-[env(safe-area-inset-bottom)]">
+          {TABS.map((t) => {
+            const active = isTabPage && page === t.id;
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setPage(t.id)}
+                aria-current={active ? 'page' : undefined}
+                className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors ${
+                  active ? 'text-accent' : 'text-muted hover:text-white'
+                }`}
+              >
+                <Icon size={21} />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { IconX } from './icons.jsx';
 
 /**
- * EasyUI Morphing Dialog — modal dengan animasi spring (skala + naik),
- * backdrop blur, tutup via backdrop / tombol × / tombol Escape.
+ * Dialog — modal bawah (sheet) di HP, terpusat di desktop.
+ * Animasi spring halus, backdrop gelap. Tutup via backdrop / × / Escape.
  */
 export default function Dialog({ open, onClose, title, children, footer }) {
   useEffect(() => {
@@ -28,27 +29,27 @@ export default function Dialog({ open, onClose, title, children, footer }) {
             type="button"
             aria-label="Tutup"
             onClick={onClose}
-            className="absolute inset-0 cursor-default bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 cursor-default bg-black/70"
           />
           <motion.div
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="relative w-full max-w-md rounded-3xl border border-line bg-card p-5 shadow-card"
-            initial={{ opacity: 0, scale: 0.92, y: 24 }}
+            className="relative w-full max-w-md rounded-2xl border border-white/5 bg-card p-5"
+            initial={{ opacity: 0, scale: 0.97, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+            exit={{ opacity: 0, scale: 0.98, y: 8 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
           >
             <div className="mb-3 flex items-start justify-between gap-3">
-              {title && <h3 className="text-lg font-extrabold">{title}</h3>}
+              {title && <h3 className="text-lg font-semibold">{title}</h3>}
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Tutup dialog"
-                className="rounded-full bg-white/5 px-2.5 py-1 text-muted hover:bg-white/10 hover:text-text"
+                className="rounded-lg bg-white/5 p-1.5 text-muted hover:bg-white/10 hover:text-white"
               >
-                ✕
+                <IconX size={16} />
               </button>
             </div>
             {children}

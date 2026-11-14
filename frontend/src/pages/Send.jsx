@@ -4,16 +4,17 @@ import { api } from '../supabaseClient.js';
 import {
   Alert,
   Badge,
+  Button,
+  Card,
   Dialog,
   DragToConfirm,
+  IconChevronLeft,
   Input,
-  MagneticButton,
-  SpotlightCard,
 } from '../components/ui/index.js';
 
 const PIN_RE = /^\d{6}$/;
 
-export default function Send({ wallet }) {
+export default function Send({ wallet, onBack }) {
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
   const [pin, setPin] = useState('');
@@ -60,16 +61,26 @@ export default function Send({ wallet }) {
   // mengeksekusi. Wallet vault belum punya signer (TODO-CLI/SIGNER).
   if (!isServer) {
     return (
-      <SpotlightCard>
-        <h2 className="text-xl font-extrabold">Kirim OPCA</h2>
+      <Card>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="mb-3 flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <IconChevronLeft size={16} />
+            Beranda
+          </button>
+        )}
+        <h2 className="text-xl font-semibold">Kirim OPCA</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          Kirim dari wallet <strong className="text-text">{wallet?.label}</strong> belum
+          Kirim dari wallet <strong className="text-white">{wallet?.label}</strong> belum
           aktif. Wallet vault ini menunggu integrasi signer worker (TODO-CLI/SIGNER):
           worker belum bisa menandatangani dari vault terenkripsi karena
           password enkripsi hanya ada di browser kamu.
           Untuk kirim, ganti dulu ke Wallet Utama di Pengaturan.
         </p>
-      </SpotlightCard>
+      </Card>
     );
   }
 
@@ -108,11 +119,21 @@ export default function Send({ wallet }) {
   const locked = lock && new Date(lock) > new Date();
 
   return (
-    <SpotlightCard>
-      <h2 className="text-xl font-extrabold">Kirim OPCA</h2>
+    <Card>
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="mb-3 flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-white/5 hover:text-white"
+        >
+          <IconChevronLeft size={16} />
+          Beranda
+        </button>
+      )}
+      <h2 className="text-xl font-semibold">Kirim OPCA</h2>
       <p className="mt-2 text-sm leading-relaxed text-muted">
-        Web ini <strong className="text-text">publik</strong>, jadi{' '}
-        <strong className="text-text">PIN 6 digit WAJIB untuk setiap kirim</strong>,
+        Web ini <strong className="text-white">publik</strong>, jadi{' '}
+        <strong className="text-white">PIN 6 digit WAJIB untuk setiap kirim</strong>,
         tanpa pengecualian. PIN tidak pernah disimpan di web / Supabase / Vercel —
         hanya hash-nya di file lokal ai-server, dan worker yang memverifikasinya.
       </p>
@@ -162,16 +183,16 @@ export default function Send({ wallet }) {
             {info}
           </Alert>
         )}
-        <MagneticButton type="submit" disabled={busy || locked} className="mt-5">
+        <Button type="submit" disabled={busy || locked} className="mt-5">
           {busy ? 'Mengirim…' : 'Kirim'}
-        </MagneticButton>
+        </Button>
       </form>
 
       {status && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-5 rounded-2xl border border-line bg-black/20 p-4"
+          className="mt-5 rounded-xl border border-white/5 bg-white/[0.03] p-4"
         >
           <p className="text-sm">
             Status:{' '}
@@ -220,6 +241,6 @@ export default function Send({ wallet }) {
           dan akan diverifikasi worker ai-server sebelum transfer dijalankan.
         </p>
       </Dialog>
-    </SpotlightCard>
+    </Card>
   );
 }

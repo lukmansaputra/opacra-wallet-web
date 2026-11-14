@@ -2,39 +2,36 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from './cn.js';
 
 /**
- * EasyUI Badge — API sesuai dokumentasi easyui.site/components/badge:
- * variant: 'soft' | 'solid' | 'outline' (default 'soft')
- * tone: 'neutral' | 'success' | 'warning' | 'danger' (default 'neutral')
- * dot: tampilkan titik status di depan
- * pulse: cincin pulse animasi pada titik status
- * onRemove: bila diisi, jadi chip yang bisa dihapus (tombol ×)
- * Angka/teks ikut "roll" (geser) saat nilainya berubah.
+ * Badge — API: variant 'soft' | 'solid' | 'outline' (default 'soft'),
+ * tone 'neutral' | 'success' | 'warning' | 'danger', dot (titik status
+ * statis, tanpa cincin pulse), onRemove (chip yang bisa dihapus).
+ * Angka/teks ikut geser halus saat nilainya berubah.
  */
 const tones = {
   neutral: {
-    soft: 'bg-slate-500/15 text-slate-300',
-    solid: 'bg-slate-500 text-white',
-    outline: 'border border-slate-500/50 text-slate-300',
+    soft: 'bg-white/5 text-white/70',
+    solid: 'bg-white/15 text-white',
+    outline: 'border border-white/15 text-white/70',
   },
   success: {
-    soft: 'bg-emerald-500/15 text-emerald-300',
+    soft: 'bg-emerald-500/10 text-emerald-400',
     solid: 'bg-emerald-500 text-white',
-    outline: 'border border-emerald-500/50 text-emerald-300',
+    outline: 'border border-emerald-500/40 text-emerald-400',
   },
   warning: {
-    soft: 'bg-amber-500/15 text-amber-300',
+    soft: 'bg-amber-500/10 text-amber-400',
     solid: 'bg-amber-500 text-white',
-    outline: 'border border-amber-500/50 text-amber-300',
+    outline: 'border border-amber-500/40 text-amber-400',
   },
   danger: {
-    soft: 'bg-red-500/15 text-red-300',
+    soft: 'bg-red-500/10 text-red-400',
     solid: 'bg-red-500 text-white',
-    outline: 'border border-red-500/50 text-red-300',
+    outline: 'border border-red-500/40 text-red-400',
   },
 };
 
 const dotColors = {
-  neutral: 'bg-slate-400',
+  neutral: 'bg-white/40',
   success: 'bg-emerald-400',
   warning: 'bg-amber-400',
   danger: 'bg-red-400',
@@ -49,28 +46,21 @@ export default function Badge({
   children,
   className,
 }) {
+  // `pulse` dipertahankan untuk kompatibilitas API, tapi tidak lagi
+  // merender cincin ping — titik status kini statis.
+  void pulse;
   const key = typeof children === 'string' || typeof children === 'number' ? String(children) : null;
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold leading-none',
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold leading-none',
         tones[tone][variant] || tones[tone].soft,
         className,
       )}
     >
       {dot && (
-        <span className="relative flex h-2 w-2">
-          {pulse && (
-            <span
-              className={cn(
-                'absolute inline-flex h-full w-full animate-ping rounded-full opacity-60',
-                dotColors[tone],
-              )}
-            />
-          )}
-          <span className={cn('relative inline-flex h-2 w-2 rounded-full', dotColors[tone])} />
-        </span>
+        <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', dotColors[tone])} />
       )}
       {key !== null ? (
         <span className="relative inline-flex overflow-hidden">

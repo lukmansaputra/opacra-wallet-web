@@ -1,15 +1,16 @@
 import { useRef, useState } from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { motion, useMotionValue } from 'framer-motion';
+import { IconCheck, IconChevronRight } from './icons.jsx';
 import { cn } from './cn.js';
 
 /**
- * EasyUI Drag to Confirm — geser kenop sampai ujung untuk konfirmasi.
- * Dipakai sebagai langkah konfirmasi akhir kirim OPCA (pengganti klik kedua).
- * Ketuk kenop juga bisa dipakai sebagai fallback (mis. layar sentuh).
+ * Drag to Confirm — geser kenop sampai ujung untuk konfirmasi.
+ * Dipakai sebagai langkah konfirmasi akhir kirim OPCA.
+ * Ketuk kenop juga bisa dipakai sebagai fallback (layar sentuh).
  */
 export default function DragToConfirm({
   label = 'Geser untuk konfirmasi',
-  confirmLabel = 'Terkonfirmasi ✓',
+  confirmLabel = 'Terkonfirmasi',
   disabled = false,
   onConfirm,
   className,
@@ -19,11 +20,9 @@ export default function DragToConfirm({
   const [done, setDone] = useState(false);
   const [dragging, setDragging] = useState(false);
 
-  const knobOpacity = useTransform(x, [0, 160], [1, 0.55]);
-
   function maxX() {
     const w = trackRef.current?.clientWidth || 320;
-    return Math.max(0, w - 64);
+    return Math.max(0, w - 60);
   }
 
   function handleDragEnd(_, info) {
@@ -49,16 +48,16 @@ export default function DragToConfirm({
     <div
       ref={trackRef}
       className={cn(
-        'relative flex h-14 w-full touch-none select-none items-center overflow-hidden rounded-2xl border',
+        'relative flex h-14 w-full touch-none select-none items-center overflow-hidden rounded-xl border',
         done
-          ? 'border-accent/60 bg-accent/15'
-          : 'border-line2 bg-card2',
-        disabled && 'opacity-55',
+          ? 'border-accent/50 bg-accent/10'
+          : 'border-white/10 bg-white/[0.03]',
+        disabled && 'opacity-50',
         className,
       )}
     >
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center pl-10 pr-4">
-        <span className="text-sm font-bold text-muted">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center pl-12 pr-4">
+        <span className="text-sm font-medium text-muted">
           {done ? confirmLabel : dragging ? 'Terus geser…' : label}
         </span>
       </div>
@@ -70,18 +69,17 @@ export default function DragToConfirm({
         dragConstraints={{ left: 0, right: maxX() }}
         dragElastic={0}
         dragMomentum={false}
-        style={{ x, opacity: knobOpacity }}
+        style={{ x }}
         onDragStart={() => setDragging(true)}
         onDragEnd={handleDragEnd}
         onClick={handleTap}
         whileTap={{ scale: 0.96 }}
         className={cn(
-          'relative z-10 ml-1 flex h-12 w-12 shrink-0 cursor-grab items-center justify-center rounded-xl text-lg font-black',
-          done ? 'bg-accent text-[#06130a]' : 'bg-accent text-[#06130a] shadow-glow',
-          'active:cursor-grabbing',
+          'relative z-10 ml-1 flex h-12 w-12 shrink-0 cursor-grab items-center justify-center rounded-lg text-[#06130A] active:cursor-grabbing',
+          done ? 'bg-accent' : 'bg-accent',
         )}
       >
-        →
+        {done ? <IconCheck size={20} /> : <IconChevronRight size={20} />}
       </motion.button>
     </div>
   );

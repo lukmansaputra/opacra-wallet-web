@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase, signInWithGoogle } from '../supabaseClient.js';
-import { Alert, Input, MagneticButton, SpotlightCard } from '../components/ui/index.js';
+import { Alert, Button, Card, IconWallet, Input } from '../components/ui/index.js';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -33,34 +33,39 @@ export default function Login() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-10">
       <motion.div
-        initial={{ opacity: 0, y: 18 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
       >
         <div className="mb-6 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-accent to-emerald-700 text-3xl font-black text-[#06130a] shadow-glow">
-            ◈
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-[#06130A]">
+            <IconWallet size={28} />
           </div>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight">
-            Opacra <span className="text-accent">Wallet</span>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight">
+            Opacra Wallet
           </h1>
           <p className="mt-1.5 text-sm text-muted">
             Dompet Opacra (OPCA) — saldo, kirim, terima, riwayat, mining.
           </p>
         </div>
 
-        <SpotlightCard>
-          <MagneticButton onClick={google} disabled={googleBusy} size="lg" className="mt-0">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-sm font-black text-[#4285F4]">
+        <Card>
+          <button
+            type="button"
+            onClick={google}
+            disabled={googleBusy}
+            className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-white px-4 py-3 text-[15px] font-semibold text-zinc-900 transition-colors hover:bg-zinc-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-sm font-bold text-[#4285F4] ring-1 ring-zinc-200">
               G
             </span>
             {googleBusy ? 'Mengalihkan ke Google…' : 'Masuk dengan Google'}
-          </MagneticButton>
+          </button>
 
-          <div className="my-5 flex items-center gap-3 text-xs font-semibold text-muted">
-            <span className="h-px flex-1 bg-line" />
+          <div className="my-5 flex items-center gap-3 text-xs font-medium text-muted">
+            <span className="h-px flex-1 bg-white/10" />
             atau
-            <span className="h-px flex-1 bg-line" />
+            <span className="h-px flex-1 bg-white/10" />
           </div>
 
           <form onSubmit={submitEmail}>
@@ -84,15 +89,15 @@ export default function Login() {
                 {error}
               </Alert>
             )}
-            <MagneticButton type="submit" variant="secondary" disabled={busy} className="mt-5">
+            <Button type="submit" variant="secondary" disabled={busy} className="mt-5">
               {busy ? 'Memeriksa…' : 'Masuk dengan email'}
-            </MagneticButton>
+            </Button>
           </form>
 
           <p className="mt-5 text-center text-xs leading-relaxed text-muted">
             Login Google adalah lapis pertama. Kirim OPCA tetap butuh PIN 6 digit.
           </p>
-        </SpotlightCard>
+        </Card>
       </motion.div>
     </div>
   );

@@ -4,7 +4,7 @@ import { api } from '../supabaseClient.js';
 import { validateMnemonic, validateSpendKey } from '../crypto/mnemonic.js';
 import { encryptVault, setSessionPassword } from '../crypto/vault.js';
 import { setActiveWallet } from '../walletStore.js';
-import { Alert, AnimatedTabs, Input, MagneticButton, SpotlightCard } from '../components/ui/index.js';
+import { Alert, AnimatedTabs, Button, Card, IconChevronLeft, Input } from '../components/ui/index.js';
 
 /**
  * Import wallet: via seed phrase 25 kata ATAU spend key (64 hex).
@@ -60,16 +60,17 @@ export default function ImportWallet({ onDone, onBack }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl px-4 py-8">
-      <SpotlightCard>
+    <div className="mx-auto w-full max-w-md px-4 py-8">
+      <Card>
         <button
           type="button"
           onClick={onBack}
-          className="rounded-full bg-white/5 px-3 py-1.5 text-sm font-semibold text-muted hover:bg-white/10 hover:text-text"
+          className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-white/5 hover:text-white"
         >
-          ← Kembali
+          <IconChevronLeft size={16} />
+          Kembali
         </button>
-        <h2 className="mt-4 text-2xl font-extrabold tracking-tight">Import Wallet</h2>
+        <h2 className="mt-4 text-xl font-semibold tracking-tight">Import Wallet</h2>
 
         <div className="mt-5">
           <AnimatedTabs
@@ -84,9 +85,9 @@ export default function ImportWallet({ onDone, onBack }) {
 
         <motion.form
           key={mode}
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.18 }}
           onSubmit={submit}
           className="mt-2"
         >
@@ -96,7 +97,7 @@ export default function ImportWallet({ onDone, onBack }) {
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Wallet Import"
           />
-          <label className="mb-1.5 mt-4 block text-[13px] font-semibold text-muted">
+          <label className="mb-1.5 mt-4 block text-[13px] font-medium text-muted">
             {mode === 'mnemonic'
               ? 'Seed phrase (25 kata, dipisah spasi)'
               : 'Spend key (64 karakter hex)'}
@@ -106,7 +107,7 @@ export default function ImportWallet({ onDone, onBack }) {
               value={secret}
               onChange={(e) => setSecret(e.target.value)}
               rows={4}
-              className="w-full rounded-2xl border border-line bg-card2 px-3.5 py-3 text-[15px] text-text placeholder:text-muted/60 transition focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-[15px] text-white placeholder:text-muted/50 transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="abbey abducts ability … (25 kata)"
               autoComplete="off"
             />
@@ -116,7 +117,7 @@ export default function ImportWallet({ onDone, onBack }) {
               onChange={(e) => setSecret(e.target.value.trim())}
               placeholder="64 karakter hex"
               autoComplete="off"
-              className="w-full rounded-2xl border border-line bg-card2 px-3.5 py-3 font-mono text-[15px] text-text placeholder:text-muted/60 transition focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 font-mono text-[15px] text-white placeholder:text-muted/50 transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
           )}
           <Input
@@ -140,9 +141,9 @@ export default function ImportWallet({ onDone, onBack }) {
               {error}
             </Alert>
           )}
-          <MagneticButton type="submit" disabled={busy} className="mt-5">
+          <Button type="submit" disabled={busy} className="mt-5">
             {busy ? 'Mengenkripsi & menyimpan…' : 'Import wallet'}
-          </MagneticButton>
+          </Button>
         </motion.form>
 
         <p className="mt-4 text-xs leading-relaxed text-muted">
@@ -150,7 +151,7 @@ export default function ImportWallet({ onDone, onBack }) {
           via opacra-wallet-cli (TODO-CLI). Secret tidak pernah dikirim ke server —
           yang disimpan hanya vault terenkripsi.
         </p>
-      </SpotlightCard>
+      </Card>
     </div>
   );
 }

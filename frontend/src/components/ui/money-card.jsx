@@ -1,9 +1,6 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import SpotlightCard from './spotlight-card.jsx';
 import AnimatedNumber from './animated-number.jsx';
-import Badge from './badge.jsx';
-import MagneticButton from './magnetic-button.jsx';
+import { IconCheck, IconChevronRight, IconCopy, IconEye, IconEyeOff, IconReceive, IconRefresh, IconSend } from './icons.jsx';
 import { cn } from './cn.js';
 
 function fmt(n, locale = 'id-ID') {
@@ -11,12 +8,12 @@ function fmt(n, locale = 'id-ID') {
 }
 
 /**
- * EasyUI Money Card — kartu dompet interaktif dengan saldo yang beranimasi
- * live, aksi cepat, dan info sinkronisasi. Diadaptasi ke JSX + OPCA:
- * API mengikuti easyui.site/components/money-card:
- * user { name, avatar }, balance, currency, locale,
- * onSend (kirim), onRequest (terima), onViewAll (lihat semua / riwayat).
- * Tambahan khusus Opacra: locked, total, height, synced, updatedAt, address.
+ * Hero saldo ala wallet asli: angka besar tabular-nums, tombol mata untuk
+ * menyembunyikan saldo, aksi cepat berupa tombol ikon bulat, dan rincian
+ * saldo sebagai baris divider — tanpa gradasi, glow, atau kartu mini.
+ * API sama seperti sebelumnya: user { name }, balance, locked, total,
+ * height, synced, updatedAt, currency, locale, address,
+ * onSend, onRequest, onViewAll (riwayat), onRefresh.
  */
 export default function MoneyCard({
   user,
@@ -36,6 +33,7 @@ export default function MoneyCard({
   className,
 }) {
   const [copied, setCopied] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   async function copyAddress() {
     if (!address) return;
@@ -46,115 +44,122 @@ export default function MoneyCard({
     } catch (_) {}
   }
 
+  const actions = [
+    { key: 'send', label: 'Kirim', icon: IconSend, onClick: onSend },
+    { key: 'receive', label: 'Terima', icon: IconReceive, onClick: onRequest },
+    { key: 'refresh', label: 'Refresh', icon: IconRefresh, onClick: onRefresh },
+  ];
+
   return (
-    <SpotlightCard
-      className={cn(
-        'bg-gradient-to-br from-[#12271a] via-card to-[#0d1a24] p-0',
-        className,
-      )}
-    >
-      <div className="p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/15 text-xl font-black text-accent">
-              {user?.avatar || '◈'}
-            </div>
-            <div>
-              <p className="text-sm font-bold leading-tight">{user?.name || 'Wallet Utama'}</p>
-              <p className="text-xs text-muted">Dompet Opacra · ai-server</p>
-            </div>
-          </div>
-          <Badge
-            tone={synced ? 'success' : 'neutral'}
-            dot={synced}
-            pulse={synced}
-          >
-            {synced ? 'Tersinkron' : 'Belum sync'}
-          </Badge>
-        </div>
-
-        <p className="mt-6 text-xs font-semibold uppercase tracking-widest text-muted">
-          Saldo tersedia
+    <div className={cn('px-1 pt-2', className)}>
+      {/* Baris wallet + status sinkron */}
+      <div className="flex items-center justify-between gap-3">
+        <p className="truncate text-sm font-semibold text-white">
+          {user?.name || 'Wallet Utama'}
         </p>
-        <div className="mt-1 flex items-baseline gap-2">
-          <AnimatedNumber
-            value={balance}
-            locale={locale}
-            className="text-[42px] font-extrabold leading-none tracking-tight text-white sm:text-5xl"
+        <p className="flex shrink-0 items-center gap-1.5 text-xs text-muted">
+          <span
+            aria-hidden
+            className={cn('h-1.5 w-1.5 rounded-full', synced ? 'bg-accent' : 'bg-white/30')}
           />
-          <span className="text-lg font-bold text-accent">{currency}</span>
-        </div>
+          {synced ? 'Tersinkron' : 'Belum sync'}
+        </p>
+      </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-2xl bg-white/[0.04] px-2 py-2.5">
-            <p className="text-[11px] text-muted">Terkunci</p>
-            <p className="truncate text-sm font-bold">{fmt(locked, locale)}</p>
-          </div>
-          <div className="rounded-2xl bg-white/[0.04] px-2 py-2.5">
-            <p className="text-[11px] text-muted">Total</p>
-            <p className="truncate text-sm font-bold">{fmt(total, locale)}</p>
-          </div>
-          <div className="rounded-2xl bg-white/[0.04] px-2 py-2.5">
-            <p className="text-[11px] text-muted">Tinggi blok</p>
-            <p className="truncate text-sm font-bold">{height ?? '—'}</p>
-          </div>
-        </div>
-
-        <div className="mt-5 flex gap-2">
-          <MagneticButton size="md" onClick={onSend} className="flex-1">
-            ↑ Kirim
-          </MagneticButton>
-          <MagneticButton size="md" variant="secondary" onClick={onRequest} className="flex-1">
-            ↓ Terima
-          </MagneticButton>
-          <MagneticButton
-            size="md"
-            variant="secondary"
-            onClick={onRefresh}
-            className="w-auto px-4"
-            aria-label="Refresh saldo"
-          >
-            ↻
-          </MagneticButton>
-        </div>
-
-        {address && (
+      {/* Saldo */}
+      <div className="mt-5">
+        <div className="flex items-center gap-2">
+          <p className="text-[13px] text-muted">Saldo tersedia</p>
           <button
             type="button"
-            onClick={copyAddress}
-            className="mt-4 flex w-full items-center justify-between gap-2 rounded-2xl border border-line bg-black/30 px-3 py-2.5 text-left transition-colors hover:border-accent/40"
+            onClick={() => setHidden((v) => !v)}
+            aria-label={hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo'}
+            className="rounded-md p-1 text-muted transition-colors hover:text-white"
           >
-            <span className="truncate font-mono text-xs text-muted">{address}</span>
-            <span className="shrink-0 text-xs font-bold text-accent">
-              {copied ? 'Disalin ✓' : 'Salin'}
-            </span>
+            {hidden ? <IconEyeOff size={16} /> : <IconEye size={16} />}
           </button>
-        )}
-
-        <div className="mt-4 flex items-center justify-between gap-2 text-xs text-muted">
-          <span>
-            Update terakhir:{' '}
-            {updatedAt ? new Date(updatedAt).toLocaleString('id-ID') : '—'}
-          </span>
-          {onViewAll && (
-            <button
-              type="button"
-              onClick={onViewAll}
-              className="font-bold text-sky hover:underline"
-            >
-              Lihat riwayat →
-            </button>
+        </div>
+        <div className="mt-1 flex items-baseline gap-2">
+          {hidden ? (
+            <span className="text-[40px] font-semibold leading-none tracking-tight text-white tabular-nums sm:text-5xl">
+              ••••••
+            </span>
+          ) : (
+            <AnimatedNumber
+              value={balance}
+              locale={locale}
+              className="text-[40px] font-semibold leading-none tracking-tight text-accent tabular-nums sm:text-5xl"
+            />
           )}
+          <span className="text-base font-semibold text-muted">{currency}</span>
         </div>
       </div>
-      <motion.div
-        aria-hidden
-        className="h-1 bg-gradient-to-r from-accent via-emerald-300 to-sky"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
-        style={{ transformOrigin: 'left' }}
-      />
-    </SpotlightCard>
+
+      {/* Aksi cepat: tombol ikon bulat + label */}
+      <div className="mt-6 flex items-start justify-center gap-6">
+        {actions.map((a) => (
+          <button
+            key={a.key}
+            type="button"
+            onClick={a.onClick}
+            className="group flex w-16 flex-col items-center gap-2"
+          >
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors group-hover:bg-white/10 group-active:scale-95">
+              <a.icon size={22} />
+            </span>
+            <span className="text-xs font-medium text-muted group-hover:text-white">
+              {a.label}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Rincian saldo: baris divider */}
+      <dl className="mt-7 divide-y divide-white/5 border-t border-white/5 text-sm">
+        <div className="flex items-center justify-between py-3">
+          <dt className="text-muted">Terkunci</dt>
+          <dd className="font-semibold tabular-nums">{fmt(locked, locale)} OPCA</dd>
+        </div>
+        <div className="flex items-center justify-between py-3">
+          <dt className="text-muted">Total</dt>
+          <dd className="font-semibold tabular-nums">{fmt(total, locale)} OPCA</dd>
+        </div>
+        <div className="flex items-center justify-between py-3">
+          <dt className="text-muted">Tinggi blok</dt>
+          <dd className="font-semibold tabular-nums">{height ?? '—'}</dd>
+        </div>
+        <div className="flex items-center justify-between py-3">
+          <dt className="text-muted">Update terakhir</dt>
+          <dd className="text-xs text-muted">
+            {updatedAt ? new Date(updatedAt).toLocaleString('id-ID') : '—'}
+          </dd>
+        </div>
+      </dl>
+
+      {/* Alamat + riwayat */}
+      {address && (
+        <button
+          type="button"
+          onClick={copyAddress}
+          className="mt-2 flex w-full items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5 text-left transition-colors hover:bg-white/[0.06]"
+        >
+          <span className="truncate font-mono text-xs text-muted">{address}</span>
+          <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-white">
+            {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+            {copied ? 'Disalin' : 'Salin'}
+          </span>
+        </button>
+      )}
+      {onViewAll && (
+        <button
+          type="button"
+          onClick={onViewAll}
+          className="mt-3 flex w-full items-center justify-between py-1 text-sm font-medium text-white/80 transition-colors hover:text-white"
+        >
+          Lihat riwayat
+          <IconChevronRight size={16} className="text-muted" />
+        </button>
+      )}
+    </div>
   );
 }

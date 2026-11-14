@@ -1,18 +1,16 @@
-import { motion } from 'framer-motion';
 import { cn } from './cn.js';
 
 /**
- * EasyUI Animated Tabs — tab dengan indikator "pill" yang bergeser mulus
- * (layoutId) antar item aktif, sesuai API easyui.site:
- * tabs: [{ id, label, icon? }], value, onChange(id).
- * Konten di-cross-fade oleh parent (AnimatePresence di App).
+ * Segmented control datar (dipakai ImportWallet untuk mode seed/key).
+ * API: tabs: [{ id, label, icon? }], value, onChange(id).
+ * Aktif: latar putih 10% + teks putih; nonaktif: teks abu-abu.
  */
 export default function AnimatedTabs({ tabs, value, onChange, className }) {
   return (
     <div
       role="tablist"
       className={cn(
-        'flex gap-1 overflow-x-auto rounded-2xl border border-line bg-moss/80 p-1',
+        'flex gap-1 overflow-x-auto rounded-xl border border-white/5 bg-white/[0.03] p-1',
         className,
       )}
     >
@@ -26,17 +24,10 @@ export default function AnimatedTabs({ tabs, value, onChange, className }) {
             type="button"
             onClick={() => onChange(t.id)}
             className={cn(
-              'relative flex-1 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors',
-              active ? 'text-[#06130a]' : 'text-muted hover:text-text',
+              'relative flex-1 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
+              active ? 'bg-white/10 text-white' : 'text-muted hover:text-white',
             )}
           >
-            {active && (
-              <motion.span
-                layoutId="easyui-tab-pill"
-                className="absolute inset-0 rounded-xl bg-accent shadow-glow"
-                transition={{ type: 'spring', stiffness: 480, damping: 38 }}
-              />
-            )}
             <span className="relative flex items-center justify-center gap-1.5">
               {t.icon && <span aria-hidden>{t.icon}</span>}
               {t.label}
