@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { api } from '../supabaseClient.js';
+import {
+  Alert,
+  Badge,
+  Dialog,
+  DragToConfirm,
+  Input,
+  MagneticButton,
+  SpotlightCard,
+} from '../components/ui/index.js';
 
 const PIN_RE = /^\d{6}$/;
 
@@ -15,35 +25,21 @@ export default function Send({ wallet }) {
   const [status, setStatus] = useState(null);
   const [lock, setLock] = useState(null);
 
-  // Kirim hanya aktif untuk wallet utama (server) — worker ai-server yang
-  // mengeksekusi. Wallet vault belum punya signer (TODO-CLI/SIGNER).
-  if (wallet?.source !== 'server') {
-    return (
-      <div className="card">
-        <h2 style={{ marginTop: 0 }}>Kirim OPCA</h2>
-        <p className="muted">
-          Kirim dari wallet <strong>{wallet?.label}</strong> belum aktif.
-          Wallet vault ini menunggu integrasi signer worker (TODO-CLI/SIGNER):
-          worker belum bisa menandatangani dari vault terenkripsi karena
-          password enkripsi hanya ada di browser kamu.
-          Untuk kirim, ganti dulu ke Wallet Utama di Pengaturan.
-        </p>
-      </div>
-    );
-  }
+  const isServer = wallet?.source === 'server';
 
   // Cek status kunci kirim (lockout PIN) dari backend.
   useEffect(() => {
+    if (!isServer) return;
     api('/balance').then((b) => {
       if (b.send_locked_until && new Date(b.send_locked_until) > new Date()) {
         setLock(b.send_locked_until);
       }
     }).catch(() => {});
-  }, []);
+  }, [isServer]);
 
   // Poll status permintaan kirim sampai done/failed.
   useEffect(() => {
-    if (!reqId) return;
+    if (!reqId) return undefined;
     const t = setInterval(async () => {
       try {
         const s = await api(`/send/${reqId}`);
@@ -60,14 +56,24 @@ export default function Send({ wallet }) {
     return () => clearInterval(t);
   }, [reqId]);
 
-  async function submit(e) {
-    e.preventDefault();
-    setError(''); setInfo(''); setStatus(null);
-    if (!PIN_RE.test(pin)) {
-      setError('PIN wajib 6 digit angka. Kirim tidak bisa tanpa PIN.');
-      return;
-    }
-    if (!confirm) { setConfirm(true); return; }
+  // Kirim hanya aktif untuk wallet utama (server) — worker ai-server yang
+  // mengeksekusi. Wallet vault belum punya signer (TODO-CLI/SIGNER).
+  if (!isServer) {
+    return (
+      <SpotlightCard>
+        <h2 className="text-xl font-extrabold">Kirim OPCA</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted">
+          Kirim dari wallet <strong className="text-text">{wallet?.label}</strong> belum
+          aktif. Wallet vault ini menunggu integrasi signer worker (TODO-CLI/SIGNER):
+          worker belum bisa menandatangani dari vault terenkripsi karena
+          password enkripsi hanya ada di browser kamu.
+          Untuk kirim, ganti dulu ke Wallet Utama di Pengaturan.
+        </p>
+      </SpotlightCard>
+    );
+  }
+
+  async function executeSend() {
     setBusy(true);
     try {
       const res = await api('/send', { method: 'POST', body: { to, amount: Number(amount), pin } });
@@ -82,57 +88,138 @@ export default function Send({ wallet }) {
       } else {
         setError(err.message);
       }
+      setConfirm(false);
     } finally { setBusy(false); }
+  }
+
+  function submit(e) {
+    e.preventDefault();
+    setError(''); setInfo(''); setStatus(null);
+    if (!PIN_RE.test(pin)) {
+      setError('PIN wajib 6 digit angka. Kirim tidak bisa tanpa PIN.');
+      return;
+    }
+    // Langkah 1: buka dialog konfirmasi (drag-to-confirm) — PIN + jumlah
+    // sudah tervalidasi di sini; POST baru terjadi setelah drag selesai.
+    if (!confirm) { setConfirm(true); return; }
+    executeSend();
   }
 
   const locked = lock && new Date(lock) > new Date();
 
   return (
-    <div className="card">
-      <h2 style={{ marginTop: 0 }}>Kirim OPCA</h2>
-      <p className="muted">
-        Web ini <strong>publik</strong>, jadi <strong>PIN 6 digit WAJIB untuk setiap kirim</strong>,
+    <SpotlightCard>
+      <h2 className="text-xl font-extrabold">Kirim OPCA</h2>
+      <p className="mt-2 text-sm leading-relaxed text-muted">
+        Web ini <strong className="text-text">publik</strong>, jadi{' '}
+        <strong className="text-text">PIN 6 digit WAJIB untuk setiap kirim</strong>,
         tanpa pengecualian. PIN tidak pernah disimpan di web / Supabase / Vercel —
         hanya hash-nya di file lokal ai-server, dan worker yang memverifikasinya.
       </p>
       {locked && (
-        <p className="error">
+        <Alert tone="error" className="mt-4">
           Kirim dikunci sampai {new Date(lock).toLocaleString('id-ID')} karena 3x PIN salah
           berturut-turut. Tunggu sampai kunci dibuka, lalu coba lagi.
-        </p>
+        </Alert>
       )}
-      <form onSubmit={submit}>
-        <label>Alamat tujuan (Pa…)</label>
-        <input value={to} onChange={(e) => setTo(e.target.value.trim())} required
-          placeholder="Pa2TXGib2PHQ41hywkqEV385oaakBEgbU9KNFZf6Zfsc5V3D5qPJK18QnFMJEyZZ7mgv5JwZ543HW6jKMKwjvVFR88G8U3C8v2" />
-        <label>Jumlah (OPCA)</label>
-        <input type="number" step="0.000001" min="0.000001" value={amount}
-          onChange={(e) => setAmount(e.target.value)} required placeholder="1.0" />
-        <label>PIN 6 digit (wajib)</label>
-        <input type="password" inputMode="numeric" autoComplete="off" maxLength={6}
-          value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          required placeholder="••••••" />
-        <p className="muted">PIN dikirim via HTTPS, diverifikasi worker ai-server, lalu dihapus dari antrean.</p>
-        {confirm && (
-          <p className="success">
-            Yakin kirim {amount} OPCA ke <span className="mono">{to}</span>?
-            Klik “Kirim” sekali lagi untuk konfirmasi.
-          </p>
+      <form onSubmit={submit} className="mt-2">
+        <Input
+          label="Alamat tujuan (Pa…)"
+          value={to}
+          onChange={(e) => setTo(e.target.value.trim())}
+          required
+          placeholder="Pa2TXGib2PHQ41hywkqEV385oaakBEgbU9KNFZf6Zfsc5V3D5qPJK18QnFMJEyZZ7mgv5JwZ543HW6jKMKwjvVFR88G8U3C8v2"
+        />
+        <Input
+          label="Jumlah (OPCA)"
+          type="number"
+          step="0.000001"
+          min="0.000001"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          required
+          placeholder="1.0"
+        />
+        <Input
+          label="PIN 6 digit (wajib)"
+          type="password"
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={6}
+          value={pin}
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          required
+          placeholder="••••••"
+          hint="PIN dikirim via HTTPS, diverifikasi worker ai-server, lalu dihapus dari antrean."
+        />
+        {error && (
+          <Alert tone="error" className="mt-4">
+            {error}
+          </Alert>
         )}
-        {error && <p className="error">{error}</p>}
-        {info && <p className="success">{info}</p>}
-        <button className="btn" disabled={busy || locked}>
-          {busy ? 'Mengirim…' : confirm ? 'Ya, kirim sekarang' : 'Kirim'}
-        </button>
+        {info && (
+          <Alert tone="success" className="mt-4">
+            {info}
+          </Alert>
+        )}
+        <MagneticButton type="submit" disabled={busy || locked} className="mt-5">
+          {busy ? 'Mengirim…' : 'Kirim'}
+        </MagneticButton>
       </form>
+
       {status && (
-        <div style={{ marginTop: 16 }}>
-          <p>Status: <span className={`badge ${status.status === 'done' ? 'ok' : status.status === 'failed' ? 'failed' : 'pending'}`}>{status.status}</span></p>
-          {status.txid && <p className="mono">txid: {status.txid}</p>}
-          {status.error && <p className="error">{status.error}</p>}
-          {status.status === 'pending' && <p className="muted">Worker ai-server memproses… (cek tiap 3 detik)</p>}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-5 rounded-2xl border border-line bg-black/20 p-4"
+        >
+          <p className="text-sm">
+            Status:{' '}
+            <Badge
+              tone={status.status === 'done' ? 'success' : status.status === 'failed' ? 'danger' : 'warning'}
+              dot
+              pulse={status.status === 'pending'}
+            >
+              {status.status}
+            </Badge>
+          </p>
+          {status.txid && (
+            <p className="mt-2 break-all font-mono text-xs text-muted">txid: {status.txid}</p>
+          )}
+          {status.error && (
+            <Alert tone="error" className="mt-3">
+              {status.error}
+            </Alert>
+          )}
+          {status.status === 'pending' && (
+            <p className="mt-2 text-sm text-muted">Worker ai-server memproses… (cek tiap 3 detik)</p>
+          )}
+        </motion.div>
       )}
-    </div>
+
+      <Dialog
+        open={confirm}
+        onClose={() => setConfirm(false)}
+        title="Konfirmasi kirim"
+        footer={
+          <DragToConfirm
+            label="Geser untuk konfirmasi kirim"
+            confirmLabel="Terkirim — memproses…"
+            disabled={busy}
+            onConfirm={executeSend}
+          />
+        }
+      >
+        <p className="text-sm leading-relaxed">
+          Yakin kirim{' '}
+          <strong className="text-accent">{amount} OPCA</strong> ke{' '}
+          <span className="break-all font-mono text-xs">{to}</span>?
+        </p>
+        <p className="mt-2 text-xs leading-relaxed text-muted">
+          Geser kenop sampai ujung untuk mengeksekusi. PIN sudah tervalidasi formatnya
+          dan akan diverifikasi worker ai-server sebelum transfer dijalankan.
+        </p>
+      </Dialog>
+    </SpotlightCard>
   );
 }

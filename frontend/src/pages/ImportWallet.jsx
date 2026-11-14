@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { api } from '../supabaseClient.js';
 import { validateMnemonic, validateSpendKey } from '../crypto/mnemonic.js';
 import { encryptVault, setSessionPassword } from '../crypto/vault.js';
 import { setActiveWallet } from '../walletStore.js';
+import { Alert, AnimatedTabs, Input, MagneticButton, SpotlightCard } from '../components/ui/index.js';
 
 /**
  * Import wallet: via seed phrase 25 kata ATAU spend key (64 hex).
@@ -58,39 +60,97 @@ export default function ImportWallet({ onDone, onBack }) {
   }
 
   return (
-    <div className="app" style={{ maxWidth: 560 }}>
-      <div className="card" style={{ marginTop: 40 }}>
-        <button className="btn secondary" style={{ width: 'auto', marginTop: 0 }} onClick={onBack}>← Kembali</button>
-        <h2>Import Wallet</h2>
-        <div className="nav">
-          <button className={mode === 'mnemonic' ? 'active' : ''} onClick={() => setMode('mnemonic')}>Seed Phrase (25 kata)</button>
-          <button className={mode === 'spendkey' ? 'active' : ''} onClick={() => setMode('spendkey')}>Private Key (spend key)</button>
+    <div className="mx-auto w-full max-w-xl px-4 py-8">
+      <SpotlightCard>
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-full bg-white/5 px-3 py-1.5 text-sm font-semibold text-muted hover:bg-white/10 hover:text-text"
+        >
+          ← Kembali
+        </button>
+        <h2 className="mt-4 text-2xl font-extrabold tracking-tight">Import Wallet</h2>
+
+        <div className="mt-5">
+          <AnimatedTabs
+            tabs={[
+              { id: 'mnemonic', label: 'Seed Phrase (25 kata)' },
+              { id: 'spendkey', label: 'Private Key (spend key)' },
+            ]}
+            value={mode}
+            onChange={setMode}
+          />
         </div>
-        <form onSubmit={submit}>
-          <label>Nama wallet</label>
-          <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Wallet Import" />
-          <label>{mode === 'mnemonic' ? 'Seed phrase (25 kata, dipisah spasi)' : 'Spend key (64 karakter hex)'}</label>
+
+        <motion.form
+          key={mode}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          onSubmit={submit}
+          className="mt-2"
+        >
+          <Input
+            label="Nama wallet"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Wallet Import"
+          />
+          <label className="mb-1.5 mt-4 block text-[13px] font-semibold text-muted">
+            {mode === 'mnemonic'
+              ? 'Seed phrase (25 kata, dipisah spasi)'
+              : 'Spend key (64 karakter hex)'}
+          </label>
           {mode === 'mnemonic' ? (
-            <textarea value={secret} onChange={(e) => setSecret(e.target.value)} rows={4}
-              style={{ width: '100%', background: 'var(--card2)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 10, padding: 12 }}
-              placeholder="abbey abducts ability … (25 kata)" autoComplete="off" />
+            <textarea
+              value={secret}
+              onChange={(e) => setSecret(e.target.value)}
+              rows={4}
+              className="w-full rounded-2xl border border-line bg-card2 px-3.5 py-3 text-[15px] text-text placeholder:text-muted/60 transition focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/30"
+              placeholder="abbey abducts ability … (25 kata)"
+              autoComplete="off"
+            />
           ) : (
-            <input value={secret} onChange={(e) => setSecret(e.target.value.trim())}
-              placeholder="64 karakter hex" autoComplete="off" />
+            <input
+              value={secret}
+              onChange={(e) => setSecret(e.target.value.trim())}
+              placeholder="64 karakter hex"
+              autoComplete="off"
+              className="w-full rounded-2xl border border-line bg-card2 px-3.5 py-3 font-mono text-[15px] text-text placeholder:text-muted/60 transition focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/30"
+            />
           )}
-          <label>Password enkripsi vault (min 8 karakter)</label>
-          <input type="password" value={encPw} onChange={(e) => setEncPw(e.target.value)} required autoComplete="new-password" />
-          <label>Ulangi password enkripsi</label>
-          <input type="password" value={encPw2} onChange={(e) => setEncPw2(e.target.value)} required autoComplete="new-password" />
-          {error && <p className="error">{error}</p>}
-          <button className="btn" disabled={busy}>{busy ? 'Mengenkripsi & menyimpan…' : 'Import wallet'}</button>
-        </form>
-        <p className="muted">
+          <Input
+            label="Password enkripsi vault (min 8 karakter)"
+            type="password"
+            value={encPw}
+            onChange={(e) => setEncPw(e.target.value)}
+            required
+            autoComplete="new-password"
+          />
+          <Input
+            label="Ulangi password enkripsi"
+            type="password"
+            value={encPw2}
+            onChange={(e) => setEncPw2(e.target.value)}
+            required
+            autoComplete="new-password"
+          />
+          {error && (
+            <Alert tone="error" className="mt-4">
+              {error}
+            </Alert>
+          )}
+          <MagneticButton type="submit" disabled={busy} className="mt-5">
+            {busy ? 'Mengenkripsi & menyimpan…' : 'Import wallet'}
+          </MagneticButton>
+        </motion.form>
+
+        <p className="mt-4 text-xs leading-relaxed text-muted">
           Alamat hasil derive akan muncul setelah worker ai-server memverifikasi
           via opacra-wallet-cli (TODO-CLI). Secret tidak pernah dikirim ke server —
           yang disimpan hanya vault terenkripsi.
         </p>
-      </div>
+      </SpotlightCard>
     </div>
   );
 }

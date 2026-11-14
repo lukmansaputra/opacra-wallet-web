@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { api } from '../supabaseClient.js';
 import { generateMnemonic } from '../crypto/mnemonic.js';
 import { encryptVault, setSessionPassword } from '../crypto/vault.js';
 import { setActiveWallet } from '../walletStore.js';
+import { Alert, Input, MagneticButton, SpotlightCard } from '../components/ui/index.js';
 
 /**
  * Buat wallet baru (client-side):
@@ -16,6 +18,8 @@ import { setActiveWallet } from '../walletStore.js';
  *     wallet berstatus derivation_status='pending-cli' dan kirim dari
  *     wallet ini BELUM aktif.
  */
+const STEPS = ['Password', 'Seed phrase', 'Konfirmasi'];
+
 export default function CreateWallet({ onDone, onBack }) {
   const [step, setStep] = useState(1);
   const [label, setLabel] = useState('');
@@ -78,75 +82,162 @@ export default function CreateWallet({ onDone, onBack }) {
   }
 
   return (
-    <div className="app" style={{ maxWidth: 560 }}>
-      <div className="card" style={{ marginTop: 40 }}>
-        <button className="btn secondary" style={{ width: 'auto', marginTop: 0 }} onClick={onBack}>← Kembali</button>
-        <h2>Buat Wallet Baru</h2>
+    <div className="mx-auto w-full max-w-xl px-4 py-8">
+      <SpotlightCard>
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-full bg-white/5 px-3 py-1.5 text-sm font-semibold text-muted hover:bg-white/10 hover:text-text"
+        >
+          ← Kembali
+        </button>
+        <h2 className="mt-4 text-2xl font-extrabold tracking-tight">Buat Wallet Baru</h2>
 
-        {step === 1 && (
-          <form onSubmit={startGenerate}>
-            <p className="muted">
-              Seed phrase dibuat di browser kamu dan dienkripsi dengan password ini
-              sebelum disimpan. Password ini hanya kamu yang tahu — kalau hilang,
-              vault tidak bisa dibuka lagi.
-            </p>
-            <label>Nama wallet</label>
-            <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Wallet Baru" />
-            <label>Password enkripsi vault (min 8 karakter)</label>
-            <input type="password" value={encPw} onChange={(e) => setEncPw(e.target.value)} required autoComplete="new-password" />
-            <label>Ulangi password enkripsi</label>
-            <input type="password" value={encPw2} onChange={(e) => setEncPw2(e.target.value)} required autoComplete="new-password" />
-            {error && <p className="error">{error}</p>}
-            <button className="btn">Buat seed phrase →</button>
-          </form>
-        )}
-
-        {step === 2 && (
-          <div>
-            <p className="error">
-              ⚠️ CATAT SEED PHRASE INI SEKARANG. Seed ini hanya ditampilkan sekali.
-              Siapa pun yang punya 25 kata ini bisa mengambil alih wallet-mu.
-              Jangan screenshot ke cloud, jangan kirim lewat chat.
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              {words.map((w, i) => (
-                <div key={i} style={{ background: 'var(--card2)', padding: '8px 10px', borderRadius: 8 }}>
-                  <span className="muted">{i + 1}.</span> <strong>{w}</strong>
-                </div>
-              ))}
-            </div>
-            <label style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 16 }}>
-              <input type="checkbox" style={{ width: 'auto' }} checked={checked}
-                onChange={(e) => setChecked(e.target.checked)} />
-              Saya sudah mencatat 25 kata ini di tempat aman (kertas / offline)
-            </label>
-            {error && <p className="error">{error}</p>}
-            <button className="btn" onClick={goQuiz}>Lanjut ke konfirmasi →</button>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div>
-            <p className="muted">Buktikan kamu mencatatnya — isi kata berikut dari seed phrase-mu:</p>
-            {quiz.map((p) => (
-              <div key={p}>
-                <label>Kata ke-{p}</label>
-                <input value={answers[p] || ''} onChange={(e) => setAnswers({ ...answers, [p]: e.target.value })}
-                  autoComplete="off" placeholder={`kata ke-${p}`} />
+        {/* Indikator langkah */}
+        <div className="mt-5">
+          <div className="flex items-center gap-2">
+            {STEPS.map((s, i) => (
+              <div key={s} className="flex flex-1 flex-col gap-1.5">
+                <div
+                  className={`h-1.5 rounded-full transition-colors ${
+                    step > i + 1 || step === i + 1 ? 'bg-accent' : 'bg-white/10'
+                  }`}
+                />
+                <span
+                  className={`text-center text-[11px] font-semibold ${
+                    step === i + 1 ? 'text-accent' : 'text-muted'
+                  }`}
+                >
+                  {i + 1}. {s}
+                </span>
               </div>
             ))}
-            {error && <p className="error">{error}</p>}
-            <button className="btn" onClick={finish} disabled={busy}>
-              {busy ? 'Menyimpan vault terenkripsi…' : 'Selesai — simpan wallet'}
-            </button>
-            <p className="muted">
-              Alamat wallet akan muncul setelah worker ai-server memverifikasi derive
-              via opacra-wallet-cli (TODO-CLI). Sampai saat itu wallet berstatus
-              “alamat belum diverifikasi” dan kirim dari wallet ini belum aktif.
-            </p>
           </div>
-        )}
-      </div>
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2 }}
+            className="mt-5"
+          >
+            {step === 1 && (
+              <form onSubmit={startGenerate}>
+                <p className="text-sm leading-relaxed text-muted">
+                  Seed phrase dibuat di browser kamu dan dienkripsi dengan password ini
+                  sebelum disimpan. Password ini hanya kamu yang tahu — kalau hilang,
+                  vault tidak bisa dibuka lagi.
+                </p>
+                <Input
+                  label="Nama wallet"
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder="Wallet Baru"
+                />
+                <Input
+                  label="Password enkripsi vault (min 8 karakter)"
+                  type="password"
+                  value={encPw}
+                  onChange={(e) => setEncPw(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                />
+                <Input
+                  label="Ulangi password enkripsi"
+                  type="password"
+                  value={encPw2}
+                  onChange={(e) => setEncPw2(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                />
+                {error && (
+                  <Alert tone="error" className="mt-4">
+                    {error}
+                  </Alert>
+                )}
+                <MagneticButton type="submit" className="mt-5">
+                  Buat seed phrase →
+                </MagneticButton>
+              </form>
+            )}
+
+            {step === 2 && (
+              <div>
+                <Alert tone="warning">
+                  <strong>CATAT SEED PHRASE INI SEKARANG.</strong> Seed ini hanya
+                  ditampilkan sekali. Siapa pun yang punya 25 kata ini bisa mengambil
+                  alih wallet-mu. Jangan screenshot ke cloud, jangan kirim lewat chat.
+                </Alert>
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {words.map((w, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.94 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.02 }}
+                      className="rounded-xl border border-line bg-card2 px-3 py-2"
+                    >
+                      <span className="text-xs text-muted">{i + 1}.</span>{' '}
+                      <strong className="text-sm">{w}</strong>
+                    </motion.div>
+                  ))}
+                </div>
+                <label className="mt-5 flex cursor-pointer items-start gap-2.5 text-sm leading-relaxed">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+                    checked={checked}
+                    onChange={(e) => setChecked(e.target.checked)}
+                  />
+                  Saya sudah mencatat 25 kata ini di tempat aman (kertas / offline)
+                </label>
+                {error && (
+                  <Alert tone="error" className="mt-4">
+                    {error}
+                  </Alert>
+                )}
+                <MagneticButton onClick={goQuiz} className="mt-5">
+                  Lanjut ke konfirmasi →
+                </MagneticButton>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div>
+                <p className="text-sm text-muted">
+                  Buktikan kamu mencatatnya — isi kata berikut dari seed phrase-mu:
+                </p>
+                {quiz.map((p) => (
+                  <Input
+                    key={p}
+                    label={`Kata ke-${p}`}
+                    value={answers[p] || ''}
+                    onChange={(e) => setAnswers({ ...answers, [p]: e.target.value })}
+                    autoComplete="off"
+                    placeholder={`kata ke-${p}`}
+                  />
+                ))}
+                {error && (
+                  <Alert tone="error" className="mt-4">
+                    {error}
+                  </Alert>
+                )}
+                <MagneticButton onClick={finish} disabled={busy} className="mt-5">
+                  {busy ? 'Menyimpan vault terenkripsi…' : 'Selesai — simpan wallet'}
+                </MagneticButton>
+                <p className="mt-4 text-xs leading-relaxed text-muted">
+                  Alamat wallet akan muncul setelah worker ai-server memverifikasi derive
+                  via opacra-wallet-cli (TODO-CLI). Sampai saat itu wallet berstatus
+                  “alamat belum diverifikasi” dan kirim dari wallet ini belum aktif.
+                </p>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </SpotlightCard>
     </div>
   );
 }

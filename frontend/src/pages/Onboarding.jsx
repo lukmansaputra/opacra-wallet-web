@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { MAIN_WALLET, setActiveWallet } from '../walletStore.js';
+import { MagneticButton, SpotlightCard } from '../components/ui/index.js';
 
 /** Onboarding setelah login Google: pilih wallet utama atau buat/import baru. */
 export default function Onboarding({ goCreate, goImport, onDone }) {
@@ -11,41 +13,84 @@ export default function Onboarding({ goCreate, goImport, onDone }) {
     onDone(MAIN_WALLET);
   }
 
+  const options = [
+    {
+      key: 'main',
+      icon: '🖥',
+      title: 'Wallet Utama (ai-server)',
+      desc: 'Dompet Lukmana yang sudah ada di ai-server. Seed-nya tidak pernah keluar dari server — web ini hanya menampilkan saldo & alamatnya.',
+      extra: <p className="mt-2 break-all font-mono text-xs text-muted">{MAIN_WALLET.address}</p>,
+      cta: 'Pakai Wallet Utama',
+      variant: 'primary',
+      onClick: useMain,
+      disabled: busy,
+    },
+    {
+      key: 'create',
+      icon: '✦',
+      title: 'Buat Wallet Baru',
+      desc: 'Buat dompet Opacra baru (seed phrase 25 kata). Seed dibuat di browser kamu, dienkripsi dengan password enkripsi sebelum disimpan — server tidak pernah melihat seed plaintext.',
+      cta: 'Buat Wallet Baru',
+      variant: 'secondary',
+      onClick: goCreate,
+    },
+    {
+      key: 'import',
+      icon: '⇪',
+      title: 'Import Wallet',
+      desc: 'Sudah punya dompet Opacra? Import lewat seed phrase 25 kata atau private key (spend key). Kunci dienkripsi di browser sebelum disimpan.',
+      cta: 'Import Wallet',
+      variant: 'secondary',
+      onClick: goImport,
+    },
+  ];
+
   return (
-    <div className="app" style={{ maxWidth: 560 }}>
-      <div className="card" style={{ marginTop: 40 }}>
-        <h1 style={{ marginTop: 0 }}>Selamat datang di Opacra Wallet</h1>
-        <p className="muted">Pilih dompet yang mau dipakai. Kamu bisa tambah / ganti dompet nanti di Pengaturan.</p>
+    <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center px-4 py-10">
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+      >
+        <h1 className="text-center text-3xl font-extrabold tracking-tight">
+          Selamat datang di <span className="text-accent">Opacra Wallet</span>
+        </h1>
+        <p className="mt-2 text-center text-sm text-muted">
+          Pilih dompet yang mau dipakai. Kamu bisa tambah / ganti dompet nanti di Pengaturan.
+        </p>
 
-        <div className="card" style={{ background: 'var(--card2)' }}>
-          <h3 style={{ marginTop: 0 }}>Wallet Utama (ai-server)</h3>
-          <p className="muted">
-            Dompet Lukmana yang sudah ada di ai-server. Seed-nya tidak pernah keluar
-            dari server — web ini hanya menampilkan saldo &amp; alamatnya.
-          </p>
-          <p className="mono">{MAIN_WALLET.address}</p>
-          <button className="btn" onClick={useMain} disabled={busy}>Pakai Wallet Utama</button>
+        <div className="mt-6 space-y-3">
+          {options.map((o, i) => (
+            <motion.div
+              key={o.key}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 * i, duration: 0.3 }}
+            >
+              <SpotlightCard>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent/15 text-xl">
+                    {o.icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-extrabold">{o.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-muted">{o.desc}</p>
+                    {o.extra}
+                    <MagneticButton
+                      variant={o.variant}
+                      onClick={o.onClick}
+                      disabled={o.disabled}
+                      className="mt-4"
+                    >
+                      {o.cta}
+                    </MagneticButton>
+                  </div>
+                </div>
+              </SpotlightCard>
+            </motion.div>
+          ))}
         </div>
-
-        <div className="card" style={{ background: 'var(--card2)' }}>
-          <h3 style={{ marginTop: 0 }}>Buat Wallet Baru</h3>
-          <p className="muted">
-            Buat dompet Opacra baru (seed phrase 25 kata). Seed dibuat di browser kamu,
-            dienkripsi dengan password enkripsi sebelum disimpan — server tidak pernah
-            melihat seed plaintext.
-          </p>
-          <button className="btn secondary" onClick={goCreate}>Buat Wallet Baru</button>
-        </div>
-
-        <div className="card" style={{ background: 'var(--card2)' }}>
-          <h3 style={{ marginTop: 0 }}>Import Wallet</h3>
-          <p className="muted">
-            Sudah punya dompet Opacra? Import lewat seed phrase 25 kata atau private
-            key (spend key). Kunci dienkripsi di browser sebelum disimpan.
-          </p>
-          <button className="btn secondary" onClick={goImport}>Import Wallet</button>
-        </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
