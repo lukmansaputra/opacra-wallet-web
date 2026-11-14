@@ -164,11 +164,15 @@ async function processOne(row) {
 
 function parseXmrigHashrate() {
   // Fallback: baca baris "speed" terakhir di xmrig.log.
+  // Format XMRig: "miner  speed 10s/60s/15m 1396.6 1292.4 1375.9 H/s max ..."
+  // angka pertama setelah "10s/60s/15m" adalah hashrate 10s.
   try {
     if (!cfg.xmrigLog || !fs.existsSync(cfg.xmrigLog)) return null;
     const text = fs.readFileSync(cfg.xmrigLog, 'utf8');
     const lines = text.trim().split('\n').slice(-200);
     for (let i = lines.length - 1; i >= 0; i--) {
+      const m10 = /speed\s+10s\/60s\/15m\s+([0-9.]+)/i.exec(lines[i]);
+      if (m10) return Number(m10[1]);
       const m = /speed[^0-9]*([0-9.]+)\s*(kH\/s|H\/s)/i.exec(lines[i]);
       if (m) return m[2].toLowerCase().startsWith('k') ? Number(m[1]) * 1000 : Number(m[1]);
     }
