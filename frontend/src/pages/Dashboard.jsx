@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { api } from '../supabaseClient.js';
 import { Alert, Badge, MoneyCard, Skeleton, SpotlightCard } from '../components/ui/index.js';
 
