@@ -10,7 +10,7 @@ WorkingDirectory=/home/user/opacra-wallet-web/worker
 # Env file berisi SUPABASE_* + path wallet + OPACRA_SEND_PIN_HASH_FILE.
 # File ini permission 600, milik user. JANGAN commit isinya.
 EnvironmentFile=/home/user/opacra-wallet-web/worker/.env
-ExecStart=/usr/bin/node /home/user/opacra-wallet-web/worker/src/worker.js
+ExecStart=/home/user/.local/node22/bin/node /home/user/opacra-wallet-web/worker/src/worker.js
 Restart=on-failure
 RestartSec=10
 # Worker tidak membuka port apa pun (hanya outbound HTTPS + CLI lokal).
