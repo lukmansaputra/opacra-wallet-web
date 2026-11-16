@@ -9,7 +9,7 @@ const { supabaseAdmin } = require('./supabase');
 const { makeCli } = require('./opacra');
 const { verifyPin } = require('./pin');
 
-const ADDR_RE = /^Pa[1-9A-HJ-NP-Za-km-z]{93}$/;
+const ADDR_RE = /^(Pa[1-9A-HJ-NP-Za-km-z]{96}|Ps[1-9A-HJ-NP-Za-km-z]{96}|Pi[1-9A-HJ-NP-Za-km-z]{107})$/;
 const POLL_MS = Number(process.env.WORKER_POLL_SECONDS || 5) * 1000;
 const SYNC_MS = Number(process.env.WORKER_SYNC_SECONDS || 30) * 1000;
 const PIN_MAX_ATTEMPTS = Number(process.env.PIN_MAX_ATTEMPTS || 3);

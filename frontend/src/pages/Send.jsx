@@ -145,7 +145,7 @@ export default function Send({ wallet, onBack }) {
       )}
       <form onSubmit={submit} className="mt-2">
         <Input
-          label="Alamat tujuan (Pa…)"
+          label="Alamat tujuan (Pa… / Ps…)"
           value={to}
           onChange={(e) => setTo(e.target.value.trim())}
           required
